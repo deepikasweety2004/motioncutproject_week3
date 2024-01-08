@@ -1,0 +1,139 @@
+import java.io.*;
+import java.util.*;
+
+class User implements Serializable {
+    String username;
+    String password;
+
+    User(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+}
+
+class Expense implements Serializable {
+    String date;
+    String category;
+    double amount;
+
+    Expense(String date, String category, double amount) {
+        this.date = date;
+        this.category = category;
+        this.amount = amount;
+    }
+}
+
+class ExpenseTracker implements Serializable {
+    private Map<String, User> users;
+    private List<Expense> expenses;
+
+    ExpenseTracker() {
+        this.users = new HashMap<>();
+        this.expenses = new ArrayList<>();
+    }
+
+    // User Registration
+    void registerUser(String username, String password) {
+        if (!users.containsKey(username)) {
+            users.put(username, new User(username, password));
+            System.out.println("User '" + username + "' registered successfully.");
+        } else {
+            System.out.println("Username '" + username + "' already exists.");
+        }
+    }
+
+    // User Authentication
+    boolean authenticateUser(String username, String password) {
+        User user = users.get(username);
+        return user != null && user.password.equals(password);
+    }
+
+    // Expense Entry
+    void addExpense(String date, String category, double amount) {
+        expenses.add(new Expense(date, category, amount));
+        System.out.println("Expense added successfully.");
+    }
+
+    // Expense Listing
+    void listExpenses() {
+        if (expenses.isEmpty()) {
+            System.out.println("No expenses to display.");
+        } else {
+            for (Expense expense : expenses) {
+                System.out.println("Date: " + expense.date + ", Category: " + expense.category + ", Amount: " + expense.amount);
+            }
+        }
+    }
+
+    // Category-wise Summation
+    void calculateCategoryTotal() {
+        if (expenses.isEmpty()) {
+            System.out.println("No expenses to calculate.");
+        } else {
+            Map<String, Double> categoryTotal = new HashMap<>();
+
+            for (Expense expense : expenses) {
+                categoryTotal.put(expense.category, categoryTotal.getOrDefault(expense.category, 0.0) + expense.amount);
+            }
+
+            for (Map.Entry<String, Double> entry : categoryTotal.entrySet()) {
+                System.out.println("Category: " + entry.getKey() + ", Total: " + entry.getValue());
+            }
+        }
+    }
+
+    // Persistence - Save and Load
+    void saveDataToFile(String fileName) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName))) {
+            oos.writeObject(users);
+            oos.writeObject(expenses);
+            System.out.println("Data saved successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    void loadDataFromFile(String fileName) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName))) {
+            users = (HashMap<String, User>) ois.readObject();
+            expenses = (ArrayList<Expense>) ois.readObject();
+            System.out.println("Data loaded successfully.");
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ExpenseTracker tracker = new ExpenseTracker();
+
+        // User Registration
+        tracker.registerUser("user1", "password1");
+        tracker.registerUser("user2", "password2");
+
+        // Authentication
+        if (tracker.authenticateUser("user1", "password1")) {
+            System.out.println("User authenticated successfully.");
+        } else {
+            System.out.println("Authentication failed.");
+        }
+
+        // Expense Entry
+        tracker.addExpense("2024-01-07", "Groceries", 50.0);
+        tracker.addExpense("2024-01-08", "Entertainment", 30.0);
+        tracker.addExpense("2024-01-09", "Groceries", 20.0);
+
+        // Expense Listing
+        System.out.println("\nAll Expenses:");
+        tracker.listExpenses();
+
+        // Category-wise Summation
+        System.out.println("\nCategory-wise Total Expenses:");
+        tracker.calculateCategoryTotal();
+
+        // Persistence
+        tracker.saveDataToFile("expense_data.ser");
+        tracker.loadDataFromFile("expense_data.ser");
+    }
+}
